@@ -1,7 +1,10 @@
 package com.example.fypg;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.SearchView;
+import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -15,101 +18,128 @@ import android.view.Window;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 public class crud extends AppCompatActivity {
 
-    TextView tv, tv2;
-    Button btn;
-    ImageView iv;
+    TextView tuto, logout;
 
+    FloatingActionButton fab;
     DatabaseReference databaseReference;
+    ValueEventListener eventListener;
     RecyclerView recyclerView;
-    ArrayList<Store> storeArrayList;
+    List<Store> storeList;
     StoreAdapter adapter;
+    SearchView searchView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_crud);
 
-        Objects.requireNonNull(getSupportActionBar()).hide();
-        databaseReference = FirebaseDatabase.getInstance().getReference();
-
         recyclerView = findViewById(R.id.recyclerView);
-        recyclerView.setHasFixedSize(true);
-        recyclerView.setLayoutManager(new LinearLayoutManager(this));
+        fab = findViewById(R.id.fab);
+        searchView = findViewById(R.id.search);
+        searchView.clearFocus();
 
-        storeArrayList = new ArrayList<>();
+        GridLayoutManager gridLayoutManager = new GridLayoutManager(crud.this, 1);
+        recyclerView.setLayoutManager(gridLayoutManager);
 
-        tv = findViewById(R.id.textView28); //log keluar
-        tv2 = findViewById(R.id.textView44); //tutorial
-        btn = findViewById(R.id.button3); //add button
-        iv = findViewById(R.id.imageView19);
+        AlertDialog.Builder builder = new AlertDialog.Builder(crud.this);
+        builder.setCancelable(false);
+        builder.setView(R.layout.progress_layout);
+        AlertDialog dialog = builder.create();
+        dialog.show();
 
-        //homepage
-        tv.setOnClickListener(new View.OnClickListener() {
+        storeList = new ArrayList<>();
+        adapter = new StoreAdapter(crud.this, storeList);
+        recyclerView.setAdapter(adapter);
+
+        databaseReference = FirebaseDatabase.getInstance().getReference("Kedai");
+        dialog.show();
+        eventListener = databaseReference.addValueEventListener(new ValueEventListener() {
             @Override
-            public void onClick(View view) {
-                Intent intent = new Intent(crud.this, homepage.class);
-                startActivity(intent);
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                storeList.clear();
+                for (DataSnapshot itemSnapshot: snapshot.getChildren()){
+                    Store store = itemSnapshot.getValue(Store.class);
+
+                    store.setKey(itemSnapshot.getKey());
+
+                    storeList.add(store);
+                }
+                adapter.notifyDataSetChanged();
+                dialog.dismiss();
             }
-        });
-        
-        readData();
-        //tutorial page
-        tv2.setOnClickListener(new View.OnClickListener() {
+
             @Override
-            public void onClick(View view) {
-                Intent intent = new Intent(crud.this, crudtuto.class);
-                startActivity(intent);
-            }
+            public void onCancelled(@NonNull DatabaseError error) { dialog.dismiss();}
         });
-        //to add new store
-        btn.setOnClickListener(new View.OnClickListener() {
+
+            searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+                @Override
+                public boolean onQueryTextSubmit(String query) {
+                    return false;
+                }
+
+                @Override
+                public boolean onQueryTextChange(String newText) {
+                    searchList(newText);
+                    return true;
+                }
+            });
+
+        fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 Intent intent = new Intent(crud.this, addstore.class);
                 startActivity(intent);
             }
         });
-        //to add store
-        iv.setOnClickListener(new View.OnClickListener() {
+
+        //on top bar
+        //tutorial
+        tuto = findViewById(R.id.tutorial);
+        tuto.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Intent intent = new Intent(crud.this, editstore.class);
+                Intent intent = new Intent(crud.this, crudtuto.class);
+                startActivity(intent);
+            }
+        });
+        //logout
+        logout = findViewById(R.id.textView28);
+        logout.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent intent = new Intent(crud.this, homepage.class);
                 startActivity(intent);
             }
         });
     }
-
-    private void readData() {
-        databaseReference.child("Kedai").orderByChild("storeName").addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot snapshot) {
-                storeArrayList.clear();
-                for (DataSnapshot dataSnapshot: snapshot.getChildren()){
-                    Store stores = dataSnapshot.getValue(Store.class);
-                    storeArrayList.add(stores);
-                }
-                adapter = new StoreAdapter(crud.this, storeArrayList);
-                recyclerView.setAdapter(adapter);
-                adapter.notifyDataSetChanged();
+    public void searchList(String text){
+        ArrayList<Store> searchList = new ArrayList<>();
+        for (Store store: storeList){
+            if (store.getName().toLowerCase().contains(text.toLowerCase())){
+                searchList.add(store);
             }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError error) {
-
-            }
-        });
+        }
+        adapter.searchDataList(searchList);
     }
 }
