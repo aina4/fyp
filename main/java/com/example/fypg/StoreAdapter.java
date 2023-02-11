@@ -1,160 +1,104 @@
 package com.example.fypg;
 
-import android.app.Dialog;
 import android.content.Context;
-import android.graphics.drawable.ColorDrawable;
+import android.content.Intent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.Window;
-import android.widget.Button;
-import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.Toast;
+import com.example.fypg.Store;
 
-import androidx.annotation.NonNull;
-import androidx.recyclerview.widget.RecyclerView;
 
-import com.google.firebase.database.DatabaseReference;
+import com.bumptech.glide.Glide;
 import com.google.firebase.database.FirebaseDatabase;
 
 import java.util.ArrayList;
+import java.util.List;
 
-public class StoreAdapter extends RecyclerView.Adapter<StoreAdapter.ViewHolder> {
+import androidx.annotation.NonNull;
+import androidx.cardview.widget.CardView;
+import androidx.recyclerview.widget.RecyclerView;
 
-    Context context;
-    ArrayList<Store> storeArrayList;
-    DatabaseReference databaseReference;
+public class StoreAdapter extends RecyclerView.Adapter<MyViewHolder> {
 
-    public StoreAdapter(Context context, ArrayList<Store> storeArrayList) {
+    private Context context;
+    private List<Store> storeList;
+
+
+    public StoreAdapter(Context context, List<Store> dataList) {
         this.context = context;
-        this.storeArrayList = storeArrayList;
-        databaseReference = FirebaseDatabase.getInstance().getReference();
+        this.storeList = dataList;
     }
 
     @NonNull
     @Override
-    public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        LayoutInflater layoutInflater = LayoutInflater.from(context);
-        View view = layoutInflater.inflate(R.layout.activity_crud, parent, false);
-        return new ViewHolder(view);
+    public MyViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+            View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.recycler_store, parent, false);
+            return new MyViewHolder(view);
     }
 
     @Override
-    public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-        Store stores = storeArrayList.get(position);
+    public void onBindViewHolder(@NonNull MyViewHolder holder, int position) {
+        Glide.with(context).load(storeList.get(position).getImgUrl()).into(holder.recImage);
+        holder.recName.setText(storeList.get(position).getName());
+        holder.recAddress.setText(storeList.get(position).getAddress());
 
-        holder.textName.setText("Name: " + stores.getStoreName());
-        holder.textAddress.setText("Address: " + stores.getStoreAddress());
-
-        holder.updateicon.setOnClickListener(new View.OnClickListener() {
+        holder.recCard.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                ViewDialogUpdate viewDialogUpdate = new ViewDialogUpdate();
-                viewDialogUpdate.showDialog(context, stores.getStoreId(), stores.getStoreName(), stores.getStoreAddress());
-            }
-        });
-
-        holder.deleteicon.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                ViewDialogDelete viewDialogDelete = new ViewDialogDelete();
-                viewDialogDelete.showDialog(context, stores.getStoreId());
+                Intent intent = new Intent(context, detailStore.class);
+                intent.putExtra("Image", storeList.get(holder.getAdapterPosition()).getImgUrl());
+                intent.putExtra("Name", storeList.get(holder.getAdapterPosition()).getName());
+                intent.putExtra("Address", storeList.get(holder.getAdapterPosition()).getAddress());
+                intent.putExtra("Key",storeList.get(holder.getAdapterPosition()).getKey());
+                context.startActivity(intent);
             }
         });
     }
+  /*  @Override
+    public int getItemViewType(int position) {
+        return position % 3;
+    }*/
 
     @Override
     public int getItemCount() {
-        return storeArrayList.size();
+        return storeList.size();
     }
 
-    public static class ViewHolder extends RecyclerView.ViewHolder{
-
-        TextView textName;
-        TextView textAddress;
-
-        ImageView updateicon, deleteicon;
-
-        public ViewHolder(@NonNull View storeView){
-            super(storeView);
-            textName = storeView.findViewById(R.id.textView29);
-            textAddress = storeView.findViewById(R.id.textView33);
-
-            deleteicon = storeView.findViewById(R.id.imageView21);
-            updateicon = storeView.findViewById(R.id.imageView19);
-        }
-    }
-
-    public class ViewDialogUpdate{
-        public void showDialog(Context context, String id, String name, String address){
-            final Dialog dialog = new Dialog(context);
-            dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
-            dialog.setCancelable(false);
-            dialog.setContentView(R.layout.activity_editstore);
-
-            ImageView pic = dialog.findViewById(R.id.imgView);
-            EditText textName = dialog.findViewById(R.id.textView34);
-            EditText textAddress = dialog.findViewById(R.id.textView34);
-
-            textName.setText(name);
-            textAddress.setText(address);
-
-            Button update = dialog.findViewById(R.id.button3);
-
-            update.setText("UPDATE");
-            update.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View view) {
-                    String newName = textName.getText().toString();
-                    String newAddress= textAddress.getText().toString();
-
-                    if(name.isEmpty() || address.isEmpty()){
-                        Toast.makeText(context, "Sila isi semua data", Toast.LENGTH_SHORT).show();
-                    } else {
-                        if(newName.equals(name) && newAddress.equals(address)){
-                            Toast.makeText(context, "Anda tidak membuat perubahan", Toast.LENGTH_SHORT).show();
-                        } else{
-                            databaseReference.child("Kedai").child(id).setValue(new Store(id, name, address));
-                            Toast.makeText(context, "Berjaya dikemas kini!", Toast.LENGTH_SHORT).show();
-                            dialog.dismiss();
-                        }
-                    }
-                }
-            });
-        }
-    }
-
-    public class ViewDialogDelete{
-        public void showDialog(Context context, String id){
-            final Dialog dialog = new Dialog(context);
-            dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
-            dialog.setCancelable(false);
-            dialog.setContentView(R.layout.deletepg);
-
-            Button delete = dialog.findViewById(R.id.yes);
-            Button cancel = dialog.findViewById(R.id.no);
-
-            delete.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View view) {
-
-                            databaseReference.child("Kedai").child(id).removeValue();
-                            Toast.makeText(context, "Berjaya dipadam!", Toast.LENGTH_SHORT).show();
-                            dialog.dismiss();
-                        }
-            });
-
-            cancel.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View view) {
-                    dialog.dismiss();
-                }
-            });
-
-            dialog.getWindow().setBackgroundDrawable(new ColorDrawable(android.graphics.Color.TRANSPARENT));
-            dialog.show();
-        }
+    public void searchDataList(ArrayList<Store> searchList){
+        storeList = searchList;
+        notifyDataSetChanged();
     }
 }
+
+class MyViewHolder extends RecyclerView.ViewHolder{
+
+    ImageView recImage;
+    TextView recName, recAddress;
+    CardView recCard;
+
+    public MyViewHolder(@NonNull View itemView) {
+        super(itemView);
+
+        recImage = itemView.findViewById(R.id.recImage);
+        recCard = itemView.findViewById(R.id.recCard);
+        recName = itemView.findViewById(R.id.recName);
+        recAddress = itemView.findViewById(R.id.recAddress);
+    }
+}
+/*class MyViewHolderAdmin extends RecyclerView.ViewHolder{
+
+    ImageView recImage;
+    TextView recName, recAddress;
+    CardView recCard;
+
+    public MyViewHolderAdmin(@NonNull View itemView) {
+        super(itemView);
+
+        recImage = itemView.findViewById(R.id.recImage);
+        recCard = itemView.findViewById(R.id.recCard);
+        recName = itemView.findViewById(R.id.recName);
+        recAddress = itemView.findViewById(R.id.recAddress);
+    }
+}*/
