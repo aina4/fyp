@@ -1,17 +1,17 @@
 package com.example.fypg;
 
+import androidx.activity.result.ActivityResult;
+import androidx.activity.result.ActivityResultCallback;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
-import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 
-import android.app.Dialog;
-import android.app.ProgressDialog;
+import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.Intent;
-import android.graphics.Color;
-import android.graphics.drawable.ColorDrawable;
 import android.net.Uri;
 import android.os.Bundle;
-import android.os.Environment;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -19,110 +19,75 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.firebase.database.DataSnapshot;
-import com.google.firebase.database.DatabaseError;
-import com.google.firebase.database.DatabaseReference;
+import com.google.android.gms.tasks.Task;
+
 import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.FirebaseStorage;
-import com.google.firebase.storage.OnProgressListener;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 
-import java.util.HashMap;
-import java.util.UUID;
+import java.text.DateFormat;
+import java.util.Calendar;
+
 
 public class addstore extends AppCompatActivity {
 
-    DatabaseReference ref;
-
-    private TextView tv, tv2;
-    private EditText name, address;
-    private Button add, upload, select;
-    private ImageView imgView;
-    private Uri filePath;
-    // request code
-    private final int PICK_IMAGE_REQUEST = 22;
-    // instance for firebase storage and StorageReference
-    FirebaseStorage storage;
-    StorageReference storageReference;
+    ImageView uploadImage;
+    Button saveButton;
+    EditText uploadName, uploadAddress;
+    String imageURL;
+    Uri uri;
+    TextView back, logout;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_addstore);
 
-        ref = FirebaseDatabase.getInstance().getReference("Kedai").push();
+        uploadImage = findViewById(R.id.uploadImage);
+        uploadName = findViewById(R.id.uploadName);
+        uploadAddress = findViewById(R.id.uploadAddress);
+        saveButton = findViewById(R.id.saveButton);
 
-        select = findViewById(R.id.button8);
-        upload = findViewById(R.id.button9);
-        imgView = findViewById(R.id.imgView);
-        add = findViewById(R.id.button4); //addstore button
-        name = findViewById(R.id.textView34); //nama kedai
-        address = findViewById(R.id.textView35); //alamat kedai
+        ActivityResultLauncher<Intent> activityResultLauncher = registerForActivityResult(
+                new ActivityResultContracts.StartActivityForResult(),
+                new ActivityResultCallback<ActivityResult>() {
+                    @Override
+                    public void onActivityResult(ActivityResult result) {
+                        if (result.getResultCode() == Activity.RESULT_OK){
+                            Intent data = result.getData();
+                            uri = data.getData();
+                            uploadImage.setImageURI(uri);
+                        } else {
+                            Toast.makeText(addstore.this, "Tiada gambar dipilih", Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                }
+        );
 
-        // get the Firebase storage reference
-        storage = FirebaseStorage.getInstance();
-        storageReference = storage.getReference();
-
-        // on pressing select SelectImage() is called
-        select.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v)
-            {
-                SelectImage();
-            }
-        });
-
-        // on pressing upload uploadImage() is called
-        upload.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v)
-            {
-                uploadImage();
-            }
-        });
-
-        //to homepage after adding store page
-        add.setOnClickListener(new View.OnClickListener() {
+        uploadImage.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                if(name.equals(null) || address.equals(null) || imgView.equals(null) || name.equals("") || address.equals("") || imgView.equals("")){
-                    Toast.makeText(getApplicationContext(), "Data cannot be empty", Toast.LENGTH_SHORT).show();
-                } else{
-                    SendData(name.getText().toString(), address.getText().toString());
-                    Intent intent = new Intent(addstore.this, crud.class);
-                    startActivity(intent);
-                }
+                Intent photoPicker = new Intent();
+                photoPicker.setType("image/*");
+                photoPicker.setAction(Intent.ACTION_GET_CONTENT);
+                activityResultLauncher.launch(photoPicker);
             }
         });
-
-        //for link to another page
-        tv = findViewById(R.id.textView31); //kembali text
-        tv2 = findViewById(R.id.textView32); //log keluar text
-
-        // on pressing select SelectImage() is called
-        select.setOnClickListener(new View.OnClickListener() {
+        //to homepage after adding store page
+        saveButton.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View v)
-            {
-                SelectImage();
-            }
-        });
-
-        // on pressing upload uploadImage() is called
-        upload.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v)
-            {
-                uploadImage();
+            public void onClick(View view) {
+                saveData();
             }
         });
 
         //to crud page
-        tv.setOnClickListener(new View.OnClickListener() {
+        back = findViewById(R.id.back);
+        back.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 Intent intent = new Intent(addstore.this, crud.class);
@@ -130,7 +95,8 @@ public class addstore extends AppCompatActivity {
             }
         });
         //to homepage (logout) page
-        tv2.setOnClickListener(new View.OnClickListener() {
+        logout = findViewById(R.id.logout);
+        logout.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 Intent intent = new Intent(addstore.this, homepage.class);
@@ -138,7 +104,79 @@ public class addstore extends AppCompatActivity {
             }
         });
     }
-    //method function for sending data to db
+    public void saveData(){
+
+        StorageReference storageReference = FirebaseStorage.getInstance().getReference().child("Store Images")
+                .child(uri.getLastPathSegment());
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(addstore.this);
+        builder.setCancelable(false);
+        builder.setView(R.layout.progress_layout);
+        AlertDialog dialog = builder.create();
+        dialog.show();
+
+        storageReference.putFile(uri).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
+            @Override
+            public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
+
+                Task<Uri> uriTask = taskSnapshot.getStorage().getDownloadUrl();
+                while (!uriTask.isComplete());
+                Uri urlImage = uriTask.getResult();
+                imageURL = urlImage.toString();
+                uploadData();
+                dialog.dismiss();
+            }
+        }).addOnFailureListener(new OnFailureListener() {
+            @Override
+            public void onFailure(@NonNull Exception e) {
+                dialog.dismiss();
+            }
+        });
+    }
+
+    public void uploadData(){
+
+        String name = uploadName.getText().toString();
+        String address = uploadAddress.getText().toString();
+
+        Store store = new Store(name, address, imageURL);
+
+        //We are changing the child from title to currentDate,
+        // because we will be updating title as well and it may affect child value.
+
+        String currentDate = DateFormat.getDateTimeInstance().format(Calendar.getInstance().getTime());
+
+        FirebaseDatabase.getInstance().getReference("Kedai").child(currentDate)
+                .setValue(store).addOnCompleteListener(new OnCompleteListener<Void>() {
+                    @Override
+                    public void onComplete(@NonNull Task<Void> task) {
+                        if (task.isSuccessful()){
+                            Toast.makeText(addstore.this, "Saved", Toast.LENGTH_SHORT).show();
+                            finish();
+                        }
+                    }
+                }).addOnFailureListener(new OnFailureListener() {
+                    @Override
+                    public void onFailure(@NonNull Exception e) {
+                        Toast.makeText(addstore.this, e.getMessage().toString(), Toast.LENGTH_SHORT).show();
+                    }
+                });
+    }
+}
+
+    //retrieve image
+   /* @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if(requestCode == PICK_IMAGE_REQUEST && resultCode == RESULT_OK
+                && data != null && data.getData() != null){
+            filePath = data.getData();
+
+            Picasso.get().load(filePath).into(upload);
+        }
+    }
+//method function for sending data to db
     public void SendData(final String storeName, final String storeAddress){
         ref.addValueEventListener(new ValueEventListener() {
             @Override
@@ -170,22 +208,59 @@ public class addstore extends AppCompatActivity {
         Intent intent = new Intent();
         intent.setType("image/*");
         intent.setAction(Intent.ACTION_GET_CONTENT);
-        startActivityForResult(
-                Intent.createChooser(intent, "Select Image from here..."), PICK_IMAGE_REQUEST);
+        startActivityForResult(Intent.createChooser(intent,"Select the image"), PICK_IMAGE_REQUEST);
     }
 
+    private String getFileExtension(Uri uri){
+        ContentResolver cR = getContentResolver();
+        MimeTypeMap mime = MimeTypeMap.getSingleton();
+        return mime.getExtensionFromMimeType(cR.getType(uri));
+    }
     // UploadImage method
     private void uploadImage()
     {
         if (filePath != null) {
+            // Defining the child of storageReference
+            final StorageReference fileReference = storageReference.child(System.currentTimeMillis()
+                    + "." + getFileExtension(filePath));
+
+            mUploadTask = fileReference.putFile(filePath)
+                    .addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
+                        @Override
+                        public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
+                            Handler handler = new Handler();
+                            handler.postDelayed(new Runnable() {
+                                @Override
+                                public void run() {
+                                    mProgressBar.setProgress(0);
+                                }
+                            }, 500);
+                            Toast.makeText(addstore.this, "Upload successful", Toast.LENGTH_SHORT).show();
+                            Upload upload = new Upload(name.getText().toString().trim(),
+                                    address.getText().toString().trim(),
+                                    taskSnapshot.getMetadata().getReference().getDownloadUrl().toString());
+                            String uploadId = ref.push().getKey();
+                            ref.child(uploadId).setValue(upload);
+                        }
+                    })
+                    .addOnFailureListener(new OnFailureListener() {
+                        @Override
+                        public void onFailure(@NonNull Exception e) {
+                            Toast.makeText(addstore.this, e.getMessage(), Toast.LENGTH_SHORT).show();
+                        }
+                    })
+                    .addOnProgressListener(new OnProgressListener<UploadTask.TaskSnapshot>() {
+                        @Override
+                        public void onProgress(@NonNull UploadTask.TaskSnapshot snapshot) {
+                            double progress = (100.0 * snapshot.getBytesTransferred() / snapshot.getTotalByteCount());
+                            mProgressBar.setProgress((int) progress);
+                        }
+                    });
 
             // Code for showing progressDialog while uploading
             ProgressDialog progressDialog = new ProgressDialog(this);
             progressDialog.setTitle("Uploading...");
             progressDialog.show();
-
-            // Defining the child of storageReference
-            StorageReference ref = storageReference.child("images/" + UUID.randomUUID().toString());
 
             // adding listeners on upload
             // or failure of image
@@ -228,9 +303,7 @@ public class addstore extends AppCompatActivity {
                                     progressDialog.setMessage("Uploaded " + (int)progress + "%");
                                 }
                             });
+        } else{
+            Toast.makeText(this, "No file selected", Toast.LENGTH_SHORT).show();
         }
-    }
-  //  Dialog dialog;
-  //  dialog.getWindow().setBackgroundDrawable(new ColorDrawable(android.graphics.Color.TRANSPARENT));
-   // dialog.show();
-}
+    }*/
