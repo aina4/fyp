@@ -22,22 +22,7 @@ public class tutorial extends AppCompatActivity {
         iv2 = findViewById(R.id.imageView6);
         tv = (TextView) findViewById(R.id.textView5);
 
-        //lilit
-        iv.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Intent intent = new Intent(tutorial.this, lilit.class);
-                startActivity(intent);
-            }
-        });
-        //lontar
-        iv2.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Intent intent = new Intent(tutorial.this, lontar.class);
-                startActivity(intent);
-            }
-        });
+
         //homepage
         tv.setOnClickListener(new View.OnClickListener() {
             @Override
