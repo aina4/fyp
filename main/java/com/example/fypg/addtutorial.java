@@ -1,21 +1,32 @@
 package com.example.fypg;
 
+import androidx.activity.result.ActivityResult;
+import androidx.activity.result.ActivityResultCallback;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.app.Activity;
+import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.ContentResolver;
 import android.content.Intent;
+import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.View;
 import android.webkit.MimeTypeMap;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
+import android.widget.MediaController;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.widget.VideoView;
 
+import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
@@ -29,40 +40,74 @@ import com.google.firebase.storage.OnProgressListener;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 
+import java.text.DateFormat;
+import java.util.Calendar;
 import java.util.HashMap;
 
 public class addtutorial extends AppCompatActivity {
 
-    TextView tv, tv2;
-    EditText type,desc;
-    Button upload, add;
-    ProgressDialog progressDialog;
-    DatabaseReference ref;
+    VideoView uploadVideo;
+    Button saveButton;
+    EditText uploadType, uploadDesc;
+    String videoURL;
+
+    Uri uri;
+    ProgressDialog pd;
+    TextView back, logout;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_addtutorial);
 
-        ref = FirebaseDatabase.getInstance().getReference("Tutorial").push();
+        uploadVideo = findViewById(R.id.uploadVideo);
+        uploadType = findViewById(R.id.uploadType);
+        uploadDesc = findViewById(R.id.uploadDesc);
+        saveButton = findViewById(R.id.saveButton);
 
-        tv = findViewById(R.id.textView31); //kembali text
-        tv2 = findViewById(R.id.textView32); //log keluar text
-        type = findViewById(R.id.textView48); //type of gasing edit text
-        desc = findViewById(R.id.textView50); //description of gasing edit text
-        add = findViewById(R.id.button4); //add new tuto button
-        upload = findViewById(R.id.button9); //upload new tuto button
-        upload.setOnClickListener(new View.OnClickListener() {
+        ActivityResultLauncher<Intent> activityResultLauncher = registerForActivityResult(
+                new ActivityResultContracts.StartActivityForResult(),
+                new ActivityResultCallback<ActivityResult>() {
+                    @Override
+                    public void onActivityResult(ActivityResult result) {
+                        if (result.getResultCode() == Activity.RESULT_OK){
+                            Intent data = result.getData();
+                            uri = data.getData();
+                            pd.setTitle("Muat naik...");
+                            pd.show();
+                            uploadVideo.setVideoURI(uri);
+                            uploadvideo();
+                            setVideotoVideoView();
+                        } else {
+                            Toast.makeText(addtutorial.this, "Tiada video dipilih", Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                }
+        );
+
+        uploadVideo.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                //showing progressdialog while uploading
-                progressDialog = new ProgressDialog(addtutorial.this);
-                choosevideo();
+                //showing progress while uploading
+                pd = new ProgressDialog(addtutorial.this);
+                Intent videoPicker = new Intent();
+                videoPicker.setType("video/*");
+                videoPicker.setAction(Intent.ACTION_GET_CONTENT);
+               // startActivityForResult(videoPicker, 5);
+                activityResultLauncher.launch(videoPicker);
+            }
+        });
+        //to homepage after adding store page
+        saveButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                uploadData();
             }
         });
 
-        //to crud tuto page
-        tv.setOnClickListener(new View.OnClickListener() {
+        //to crud page
+        back = findViewById(R.id.back);
+        back.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 Intent intent = new Intent(addtutorial.this, crudtuto.class);
@@ -70,103 +115,62 @@ public class addtutorial extends AppCompatActivity {
             }
         });
         //to homepage (logout) page
-        tv2.setOnClickListener(new View.OnClickListener() {
+        logout = findViewById(R.id.logout);
+        logout.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 Intent intent = new Intent(addtutorial.this, homepage.class);
                 startActivity(intent);
             }
         });
-        //to crud tuto after updating tuto page
-        add.setOnClickListener(new View.OnClickListener() {
+    }
+    private void setVideotoVideoView(){
+        MediaController mc = new MediaController(this);
+        mc.setAnchorView(uploadVideo);
+
+        //set media controller to video view
+        uploadVideo.setMediaController(mc);
+        uploadVideo.requestFocus();
+        uploadVideo.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
             @Override
-            public void onClick(View view) {
-                if(type.equals(null) || desc.equals(null) ||  type.equals("") || desc.equals("")){
-                    Toast.makeText(getApplicationContext(), "Data cannot be empty", Toast.LENGTH_SHORT).show();
-                } else {
-                    SendVideo(type.getText().toString(), desc.getText().toString());
-                    Intent intent = new Intent(addtutorial.this, crudtuto.class);
-                    startActivity(intent);
-                }
+            public void onPrepared(MediaPlayer mp) {
+                uploadVideo.pause();
             }
         });
     }
-    //method function for sending data to db
-    public void SendVideo(final String typeGasing, final String description){
-        ref.addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot snapshot) {
-                HashMap<String, String> map = new HashMap<String, String>();
-
-                map.put("Type of Gasing", typeGasing);
-                map.put("Description", description);
-                ref.setValue(map).addOnSuccessListener(new OnSuccessListener<Void>() {
-                    @Override
-                    public void onSuccess(Void unused) {
-                        Toast.makeText(getApplicationContext(), "Data has been sent", Toast.LENGTH_SHORT).show();
-                    }
-                });
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError error) {
-
-            }
-        });
-    }
-    // choose a video from phone storage
-    private void choosevideo() {
-        Intent intent = new Intent();
-        intent.setType("video/*");
-        intent.setAction(Intent.ACTION_GET_CONTENT);
-        startActivityForResult(intent, 5);
-    }
-    Uri videouri;
-
-    // startActivityForResult is used to receive the result, which is the selected video.
-    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == 5 && resultCode == RESULT_OK && data != null && data.getData() != null) {
-            videouri = data.getData();
-            progressDialog.setTitle("Uploading...");
-            progressDialog.show();
-            uploadvideo();
-        }
-    }
-
-    private String getfiletype(Uri videouri) {
+    private String getfiletype(Uri uri) {
         ContentResolver r = getContentResolver();
         // get the file type ,in this case its mp4
         MimeTypeMap mimeTypeMap = MimeTypeMap.getSingleton();
-        return mimeTypeMap.getExtensionFromMimeType(r.getType(videouri));
+        return mimeTypeMap.getExtensionFromMimeType(r.getType(uri));
     }
 
-    private void uploadvideo() {
-        if (videouri != null) {
+    private void uploadvideo(){
+        if (uri != null) {
             // save the selected video in Firebase storage
-            final StorageReference reference = FirebaseStorage.getInstance().getReference("Files/" + System.currentTimeMillis() + "." + getfiletype(videouri));
-            reference.putFile(videouri).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
+            final StorageReference reference = FirebaseStorage.getInstance().getReference("Files/" + System.currentTimeMillis() + "." + getfiletype(uri));
+            reference.putFile(uri).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
                 @Override
                 public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
                     Task<Uri> uriTask = taskSnapshot.getStorage().getDownloadUrl();
                     while (!uriTask.isSuccessful()) ;
                     // get the link of video
                     String downloadUri = uriTask.getResult().toString();
-                    DatabaseReference reference1 = FirebaseDatabase.getInstance().getReference("Video");
+                    DatabaseReference reference1 = FirebaseDatabase.getInstance().getReference("Tutorial");
                     HashMap<String, String> map = new HashMap<>();
                     map.put("videolink", downloadUri);
                     reference1.child("" + System.currentTimeMillis()).setValue(map);
                     // Video uploaded successfully
                     // Dismiss dialog
-                    progressDialog.dismiss();
-                    Toast.makeText(addtutorial.this, "Video Uploaded!!", Toast.LENGTH_SHORT).show();
+                    pd.dismiss();
+                    Toast.makeText(addtutorial.this, "Video di muat naik!!", Toast.LENGTH_SHORT).show();
                 }
             }).addOnFailureListener(new OnFailureListener() {
                 @Override
                 public void onFailure(@NonNull Exception e) {
                     // Error, Image not uploaded
-                    progressDialog.dismiss();
-                    Toast.makeText(addtutorial.this, "Failed " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                    pd.dismiss();
+                    Toast.makeText(addtutorial.this, "Tidak berjaya" + e.getMessage(), Toast.LENGTH_SHORT).show();
                 }
             }).addOnProgressListener(new OnProgressListener<UploadTask.TaskSnapshot>() {
                 // Progress Listener for loading
@@ -175,9 +179,78 @@ public class addtutorial extends AppCompatActivity {
                 public void onProgress(UploadTask.TaskSnapshot taskSnapshot) {
                     // show the progress bar
                     double progress = (100.0 * taskSnapshot.getBytesTransferred() / taskSnapshot.getTotalByteCount());
-                    progressDialog.setMessage("Uploaded " + (int) progress + "%");
+                    pd.setMessage("Di muat naik " + (int) progress + "%");
                 }
             });
         }
+    }
+    //press the add button
+   /* public void saveData(){
+
+        StorageReference storageReference = FirebaseStorage.getInstance().getReference().child("Gasing Videos")
+                .child(uri.getLastPathSegment());
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(addtutorial.this);
+        builder.setCancelable(false);
+        builder.setView(R.layout.progress_layout);
+        AlertDialog dialog = builder.create();
+        dialog.show();
+
+        storageReference.putFile(uri).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
+            @Override
+            public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
+
+                Task<Uri> uriTask = taskSnapshot.getStorage().getDownloadUrl();
+                while (!uriTask.isComplete());
+                //get the link of video
+                Uri urlVideo = uriTask.getResult();
+                videoURL = urlVideo.toString();
+                uploadData();
+                dialog.dismiss();
+            }
+        }).addOnFailureListener(new OnFailureListener() {
+            @Override
+            public void onFailure(@NonNull Exception e) {
+                dialog.dismiss();
+            }
+        }).addOnProgressListener(new OnProgressListener<UploadTask.TaskSnapshot>() {
+            // Progress Listener for loading
+            // percentage on the dialog box
+            @Override
+            public void onProgress(UploadTask.TaskSnapshot taskSnapshot) {
+                // show the progress bar
+                double progress = (100.0 * taskSnapshot.getBytesTransferred() / taskSnapshot.getTotalByteCount());
+                pd.setMessage("Di muat naik " + (int) progress + "%");
+            }
+        });
+    }*/
+
+    public void uploadData(){
+
+        String type = uploadType.getText().toString();
+        String description = uploadDesc.getText().toString();
+
+        Gasing g = new Gasing(type, description, videoURL);
+
+        //We are changing the child from title to currentDate,
+        // because we will be updating title as well and it may affect child value.
+
+        String currentDate = DateFormat.getDateTimeInstance().format(Calendar.getInstance().getTime());
+
+        FirebaseDatabase.getInstance().getReference("Tutorial").child(currentDate)
+                .setValue(g).addOnCompleteListener(new OnCompleteListener<Void>() {
+                    @Override
+                    public void onComplete(@NonNull Task<Void> task) {
+                        if (task.isSuccessful()){
+                            Toast.makeText(addtutorial.this, "Data disimpan", Toast.LENGTH_SHORT).show();
+                            finish();
+                        }
+                    }
+                }).addOnFailureListener(new OnFailureListener() {
+                    @Override
+                    public void onFailure(@NonNull Exception e) {
+                        Toast.makeText(addtutorial.this, e.getMessage().toString(), Toast.LENGTH_SHORT).show();
+                    }
+                });
     }
 }
