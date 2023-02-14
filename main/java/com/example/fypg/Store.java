@@ -1,41 +1,49 @@
 package com.example.fypg;
 
-public class Store {
-    private String storeName, storeAddress, storeId;
+public class Gasing {
+    String mKey;
+    String type;
+    String description;
+    String video;
 
-    public Store() {
+    public Gasing() {
     }
 
-    public Store(String storeId, String storeName, String storeAddress) {
-        this.storeName = storeName;
-        this.storeAddress = storeAddress;
-      //  this.storeImage = storeImage;
-        this.storeId = storeId;
+    public Gasing(String type, String description, String video) {
+        this.type = type;
+        this.description = description;
+        this.video = video;
     }
 
-    public String getStoreName() {return storeName;}
-
-    public String getStoreAddress() {
-        return storeAddress;
+    public String getmKey() {
+        return mKey;
     }
 
-  //  public String getStoreImage() {return storeImage;}
-
-    public String getStoreId() {
-        return storeId;
+    public void setmKey(String mKey) {
+        this.mKey = mKey;
     }
 
-    public void setStoreName(String storeName) {
-        this.storeName = storeName;
+    public String getType() {
+        return type;
     }
 
-    public void setStoreAddress(String storeAddress) {
-        this.storeAddress = storeAddress;
+    public void setType(String type) {
+        this.type = type;
     }
 
-  //  public void setStoreImage(String storeImage) {this.storeImage = storeImage;}
+    public String getDescription() {
+        return description;
+    }
 
-    public void setStoreId(String storeId) {
-        this.storeId = storeId;
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public String getVideo() {
+        return video;
+    }
+
+    public void setVideo(String video) {
+        this.video = video;
     }
 }
