@@ -15,19 +15,22 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
 public class login extends AppCompatActivity {
+    private EditText et, et2;
+    private Button btn;
+    private TextView notAdmin;
 
     //create object of database
-    DatabaseReference databaseReference = FirebaseDatabase.getInstance().getReferenceFromUrl("https://fypg-2205f-default-rtdb.firebaseio.com");
+   // DatabaseReference databaseReference = FirebaseDatabase.getInstance().getReference("https://fypg-2205f-default-rtdb.firebaseio.com");
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
 
-       final EditText et = findViewById(R.id.editTextTextEmailAddress);
-       final EditText et2 = findViewById(R.id.editTextTextPassword);
-       final Button btn = findViewById(R.id.button7);
-       final TextView notadmin = findViewById(R.id.textView43);
+       et = findViewById(R.id.editTextTextEmailAddress);
+       et2 = findViewById(R.id.editTextTextPassword);
+       btn = findViewById(R.id.button7);
+       notAdmin = findViewById(R.id.textView43);
 
 
         //check admin uname and pwd
@@ -61,7 +64,7 @@ public class login extends AppCompatActivity {
             }
         });
         //not admin to homepage
-        notadmin.setOnClickListener(new View.OnClickListener() {
+        notAdmin.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 Intent intent = new Intent(login.this, homepage.class);
@@ -69,12 +72,4 @@ public class login extends AppCompatActivity {
             }
         });
     }
-
-    /* public void sendData(View view) {
-        // Write a message to the database
-        FirebaseDatabase database = FirebaseDatabase.getInstance();
-        DatabaseReference myRef = database.getReference("message");
-
-        myRef.setValue("Hello, World!");
-    }*/
 }
