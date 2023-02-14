@@ -1,49 +1,52 @@
 package com.example.fypg;
 
-public class Gasing {
-    String mKey;
-    String type;
-    String description;
-    String video;
+import com.google.firebase.database.Exclude;
 
-    public Gasing() {
+public class Store {
+    private String name;
+    private String address;
+    private String imgUrl;
+    private String mKey;
+
+    public Store(){
+
     }
 
-    public Gasing(String type, String description, String video) {
-        this.type = type;
-        this.description = description;
-        this.video = video;
+    public Store(String name, String address, String imgUrl) {
+
+        this.name = name;
+        this.address = address;
+        this.imgUrl = imgUrl;
     }
 
-    public String getmKey() {
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getAddress() {
+        return address;
+    }
+
+    public void setAddress(String address) {
+        this.address = address;
+    }
+
+    public String getImgUrl() {
+        return imgUrl;
+    }
+
+    public void setImgUrl(String imgUrl) {
+        this.imgUrl = imgUrl;
+    }
+
+    public String getKey(){
         return mKey;
     }
 
-    public void setmKey(String mKey) {
-        this.mKey = mKey;
-    }
+    public void setKey(String key){ mKey = key;}
 
-    public String getType() {
-        return type;
-    }
-
-    public void setType(String type) {
-        this.type = type;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    public String getVideo() {
-        return video;
-    }
-
-    public void setVideo(String video) {
-        this.video = video;
-    }
 }
