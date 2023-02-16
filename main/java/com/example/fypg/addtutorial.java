@@ -16,6 +16,8 @@ import android.content.Intent;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.view.View;
 import android.webkit.MimeTypeMap;
 import android.widget.Button;
@@ -47,7 +49,7 @@ import java.util.HashMap;
 public class addtutorial extends AppCompatActivity {
 
     VideoView uploadVideo;
-    Button saveButton;
+    Button saveButton, upload;
     EditText uploadType, uploadDesc;
     String videoURL;
 
@@ -64,6 +66,7 @@ public class addtutorial extends AppCompatActivity {
         uploadType = findViewById(R.id.uploadType);
         uploadDesc = findViewById(R.id.uploadDesc);
         saveButton = findViewById(R.id.saveButton);
+        upload = findViewById(R.id.upload);
 
         ActivityResultLauncher<Intent> activityResultLauncher = registerForActivityResult(
                 new ActivityResultContracts.StartActivityForResult(),
@@ -73,9 +76,39 @@ public class addtutorial extends AppCompatActivity {
                         if (result.getResultCode() == Activity.RESULT_OK){
                             Intent data = result.getData();
                             uri = data.getData();
+                            uploadVideo.setVideoURI(uri);
+
                             pd.setTitle("Muat naik...");
                             pd.show();
-                            uploadVideo.setVideoURI(uri);
+                           /* pd.setMessage("Tunggu Sebentar");
+                            pd.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
+                            pd.setIndeterminate(true);
+                            pd.setProgress(0);
+                            pd.setMax(100);
+
+
+                            final Handler handler = new Handler(new Handler.Callback(){
+                                @Override
+                                public boolean handleMessage(Message msg){
+                                    pd.setProgress(pd.getProgress()+1);
+                                    return true;
+                                }
+                            });
+
+                            new Thread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    while (pd.getProgress()<pd.getMax()){
+                                        try{
+                                            Thread.sleep(10);
+                                            handler.sendMessage(handler.obtainMessage());
+                                        } catch (InterruptedException e){
+                                            e.printStackTrace();
+                                        }
+                                    }
+                                }
+                            }).start();
+                            }*/
                             uploadvideo();
                             setVideotoVideoView();
                         } else {
@@ -85,7 +118,7 @@ public class addtutorial extends AppCompatActivity {
                 }
         );
 
-        uploadVideo.setOnClickListener(new View.OnClickListener() {
+        upload.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 //showing progress while uploading
@@ -101,7 +134,7 @@ public class addtutorial extends AppCompatActivity {
         saveButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                uploadData();
+                saveData();
             }
         });
 
@@ -148,18 +181,21 @@ public class addtutorial extends AppCompatActivity {
     private void uploadvideo(){
         if (uri != null) {
             // save the selected video in Firebase storage
-            final StorageReference reference = FirebaseStorage.getInstance().getReference("Files/" + System.currentTimeMillis() + "." + getfiletype(uri));
+            final StorageReference reference = FirebaseStorage.getInstance().getReference("Gasing Videos/" + System.currentTimeMillis() + "." + getfiletype(uri));
             reference.putFile(uri).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
                 @Override
                 public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
                     Task<Uri> uriTask = taskSnapshot.getStorage().getDownloadUrl();
-                    while (!uriTask.isSuccessful()) ;
+                    while (!uriTask.isSuccessful());
                     // get the link of video
-                    String downloadUri = uriTask.getResult().toString();
-                    DatabaseReference reference1 = FirebaseDatabase.getInstance().getReference("Tutorial");
-                    HashMap<String, String> map = new HashMap<>();
-                    map.put("videolink", downloadUri);
-                    reference1.child("" + System.currentTimeMillis()).setValue(map);
+                  //  Uri urlVideo = uriTask.getResult();
+                   // videoURL = urlVideo.toString();
+                   // uploadData();
+                   // String downloadUri = uriTask.getResult().toString();
+                  //  DatabaseReference reference1 = FirebaseDatabase.getInstance().getReference("Tutorial");
+                 //   HashMap<String, String> map = new HashMap<>();
+                  //  map.put("videolink", downloadUri);
+                 //   reference1.child("" + System.currentTimeMillis()).setValue(map);
                     // Video uploaded successfully
                     // Dismiss dialog
                     pd.dismiss();
@@ -185,10 +221,8 @@ public class addtutorial extends AppCompatActivity {
         }
     }
     //press the add button
-   /* public void saveData(){
-
-        StorageReference storageReference = FirebaseStorage.getInstance().getReference().child("Gasing Videos")
-                .child(uri.getLastPathSegment());
+    public void saveData(){
+        final StorageReference storageReference = FirebaseStorage.getInstance().getReference("Gasing Videos/" + System.currentTimeMillis() + "." + getfiletype(uri));
 
         AlertDialog.Builder builder = new AlertDialog.Builder(addtutorial.this);
         builder.setCancelable(false);
@@ -201,7 +235,7 @@ public class addtutorial extends AppCompatActivity {
             public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
 
                 Task<Uri> uriTask = taskSnapshot.getStorage().getDownloadUrl();
-                while (!uriTask.isComplete());
+                while (!uriTask.isSuccessful());
                 //get the link of video
                 Uri urlVideo = uriTask.getResult();
                 videoURL = urlVideo.toString();
@@ -211,7 +245,9 @@ public class addtutorial extends AppCompatActivity {
         }).addOnFailureListener(new OnFailureListener() {
             @Override
             public void onFailure(@NonNull Exception e) {
-                dialog.dismiss();
+                // Error, Video not uploaded
+                pd.dismiss();
+                Toast.makeText(addtutorial.this, "Tidak berjaya" + e.getMessage(), Toast.LENGTH_SHORT).show();
             }
         }).addOnProgressListener(new OnProgressListener<UploadTask.TaskSnapshot>() {
             // Progress Listener for loading
@@ -223,7 +259,7 @@ public class addtutorial extends AppCompatActivity {
                 pd.setMessage("Di muat naik " + (int) progress + "%");
             }
         });
-    }*/
+    }
 
     public void uploadData(){
 
