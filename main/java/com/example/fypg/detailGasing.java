@@ -1,11 +1,17 @@
 package com.example.fypg;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.app.ProgressDialog;
 import android.content.Intent;
+import android.media.MediaPlayer;
+import android.net.Uri;
 import android.os.Bundle;
+import android.renderscript.ScriptGroup;
 import android.view.View;
 import android.widget.ImageView;
+import android.widget.MediaController;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.VideoView;
@@ -13,6 +19,7 @@ import android.widget.VideoView;
 import com.bumptech.glide.Glide;
 import com.github.clans.fab.FloatingActionButton;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.storage.FirebaseStorage;
@@ -26,6 +33,8 @@ public class detailGasing extends AppCompatActivity {
     FloatingActionButton deleteButton, editButton;
     String key = "";
     String videoUrl = "";
+    Uri uri;
+    ProgressDialog pd;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -43,8 +52,19 @@ public class detailGasing extends AppCompatActivity {
             detailType.setText(bundle.getString("Type"));
             detailDesc.setText(bundle.getString("Description"));
             key = bundle.getString("Key");
+            MediaController mediaController = new MediaController(this);
+            mediaController.setAnchorView(detailVideo);
             videoUrl = bundle.getString("Video");
-           // Glide.with(this).load(bundle.getString("Video")).into(detailVideo);
+            uri = Uri.parse(bundle.getString("Video"));
+            detailVideo.setMediaController(mediaController);
+            detailVideo.setVideoURI(uri);
+           // binding.detailVideo.setVideoURI(uri);
+            detailVideo.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    detailVideo.start();
+                }
+            });
         }
 
         deleteButton.setOnClickListener(new View.OnClickListener() {
@@ -58,7 +78,7 @@ public class detailGasing extends AppCompatActivity {
                     @Override
                     public void onSuccess(Void unused) {
                         reference.child(key).removeValue();
-                        Toast.makeText(detailGasing.this, "Deleted", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(detailGasing.this, "Telah Dibuang", Toast.LENGTH_SHORT).show();
                         startActivity(new Intent(getApplicationContext(), crudtuto.class));
                         finish();
                     }
@@ -73,6 +93,24 @@ public class detailGasing extends AppCompatActivity {
                         .putExtra("Description", detailDesc.getText().toString())
                         .putExtra("Video", videoUrl)
                         .putExtra("Key", key);
+                startActivity(intent);
+            }
+        });
+        //go back to crud tuto page
+        back = findViewById(R.id.back);
+        back.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent intent = new Intent(detailGasing.this, crudtuto.class);
+                startActivity(intent);
+            }
+        });
+        //homepage (logout)
+        logout = findViewById(R.id.logout);
+        logout.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent intent = new Intent(detailGasing.this, homepage.class);
                 startActivity(intent);
             }
         });
