@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".MainActivity"
+    android:background="@drawable/bg">
+
+    <TextView
+        android:id="@+id/tv1"
+        android:layout_width="348dp"
+        android:layout_height="0dp"
+        android:layout_marginTop="61dp"
+        android:layout_marginEnd="20dp"
+        android:layout_marginBottom="270dp"
+        android:gravity="center"
+        android:text="Gasing merupakan sejenis permainan yang boleh berputar pada paksinya, sambil mengimbang pada satu titik. Ia merupakan permainan tradisional orang-orang Melayu sejak dahulu lagi. Pemenang dikira berdasarkan tempoh masa gasing mampu berputar."
+        android:textSize="16dp"
+        android:textStyle="bold"
+        app:layout_constraintBaseline_toBottomOf="parent"
+        app:layout_constraintBottom_toTopOf="@+id/tv2"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <ImageView
+        android:layout_width="331dp"
+        android:layout_height="203dp"
+        android:layout_marginStart="44dp"
+        android:layout_marginEnd="44dp"
+        android:layout_marginBottom="265dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/tv1"
+        app:layout_constraintVertical_bias="0.473"
+        app:srcCompat="@drawable/play" />
+
+    <TextView
+        android:id="@+id/tv2"
+        android:layout_width="346dp"
+        android:layout_height="204dp"
+        android:layout_marginEnd="22dp"
+        android:layout_marginBottom="70dp"
+        android:gravity="center"
+        android:text="Gasing dibuat daripada kayu bebaru, kemuning, merbau, rambai, durian atau kundang. Kayu tersebut akan ditakik-takik dan dikikis sehingga menjadi bentuknya. Tali gasing dibuat daripada kulit pokok bebaru tetapi sekarang tali gasing dibuat daripada tali nilon. Panjang tali gasing biasanya bergantung kepada panjang tangan seseorang. Biasanya 1 meter panjang. Minyak kelapa digunakan untuk melicinkan pergerakan gasing."
+        android:textSize="16dp"
+        android:textStyle="bold"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/tv1" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

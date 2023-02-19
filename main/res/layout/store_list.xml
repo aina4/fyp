@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/recCard"
+    android:orientation="vertical">
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="270dp"
+        android:background="@drawable/bg">
+
+        <com.google.android.material.imageview.ShapeableImageView
+            android:id="@+id/recImage"
+            android:layout_width="169dp"
+            android:layout_height="145dp"
+            android:layout_marginLeft="20dp"
+            android:layout_marginTop="20dp"
+            android:layout_marginRight="20dp"
+            android:foregroundGravity="center"
+            android:scaleType="fitXY"
+            android:src="@drawable/ic_launcher_background" />
+
+        <TextView
+            android:id="@+id/recName"
+            android:layout_width="115dp"
+            android:layout_height="wrap_content"
+            android:layout_alignTop="@id/recAddress"
+            android:layout_marginLeft="50dp"
+            android:layout_marginTop="-43dp"
+            android:layout_marginBottom="10dp"
+            android:text="Store Name"
+            android:textAlignment="center"
+            android:textColor="@color/black"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/recAddress"
+            android:layout_width="wrap_content"
+            android:layout_height="57dp"
+            android:layout_alignParentBottom="true"
+            android:layout_marginLeft="22dp"
+            android:layout_marginBottom="0dp"
+            android:paddingLeft="43dp"
+            android:paddingRight="40dp"
+            android:paddingBottom="20dp"
+            android:text="Store Address"
+            android:textColor="@color/black"
+            tools:layout_editor_absoluteX="244dp" />
+    </RelativeLayout>
+</androidx.cardview.widget.CardView>
