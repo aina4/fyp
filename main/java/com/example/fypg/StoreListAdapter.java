@@ -2,6 +2,7 @@ package com.example.fypg;
 
 import android.content.Context;
 import android.content.Intent;
+import android.net.Uri;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -13,9 +14,11 @@ import androidx.cardview.widget.CardView;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
+import com.google.android.gms.maps.model.MarkerOptions;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public class StoreListAdapter extends RecyclerView.Adapter<StoreListViewHolder> {
 
@@ -50,6 +53,29 @@ public class StoreListAdapter extends RecyclerView.Adapter<StoreListViewHolder> 
                 intent.putExtra("Address", storeListUser.get(holder.getAdapterPosition()).getAddress());
                 intent.putExtra("Key",storeListUser.get(holder.getAdapterPosition()).getKey());
                 context.startActivity(intent);
+            }
+        });
+        holder.recImage.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if(holder.recName.getText().equals("Central Market")){
+                    Intent intent = new Intent(Intent.ACTION_VIEW,
+                            Uri.parse("google.navigation:q=3.1455098818649008, 101.69550160594483"));
+                    intent.setPackage("com.google.android.apps.maps");
+                    context.startActivity(intent);
+                }
+                if(holder.recName.getText().equals("Kedai Lao Mao")){
+                    Intent intent = new Intent(Intent.ACTION_VIEW,
+                            Uri.parse("google.navigation:q=2.824713325612721, 101.50058468205727"));
+                    intent.setPackage("com.google.android.apps.maps");
+                    context.startActivity(intent);
+                }
+                if(holder.recName.getText().equals("Gasing Lagenda")){
+                    Intent intent = new Intent(Intent.ACTION_VIEW,
+                            Uri.parse("google.navigation:q=2.2453329, 102.1900797"));
+                    intent.setPackage("com.google.android.apps.maps");
+                    context.startActivity(intent);
+                }
             }
         });
     }
